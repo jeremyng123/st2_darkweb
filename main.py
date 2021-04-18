@@ -7,22 +7,27 @@ from scrape import *
 from urls import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+import os
 
 fieldnames = [
-    "vendor", "listings", "reviews", "ratings", "number of profiles",
+    "vendor", "about", "listings", "reviews", "ratings", "number of profiles",
     "profiles (site: link)"
 ]
 
 
 def searchWithKilo():
-    file = open("kilo_scrape.csv", "a+")
+    # print(f'\n\n\n{os.path.dirname(os.path.abspath(__file__))} \n\n\n')
+    file = open(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..",
+                     "kilo_scrape.csv"), "w")
     try:
         csv_file = csv.writer(file, delimiter=',')
         for index, vendor in enumerate(vendors):
             try:
                 # get to main profile page
                 driver.get(KILOS_VENDOR.format(vendor))
-                about = driver.find_element_by_xpath(".//textarea")
+                about = driver.find_element_by_xpath(
+                    ".//textarea").get_attribute('value')
                 # print(f"\n\nabout:\n{about.get_attribute('value')}")
                 stats = driver.find_elements_by_class_name("stat")
                 numLists = stats[0].text
@@ -48,16 +53,21 @@ def searchWithKilo():
                 for site, link in links.items():
                     market_profiles += f"{site}: {link}\n"
                 csv_file.writerow([
-                    vendor, numLists, numReviews, avgRating, numProfiles,
-                    market_profiles[:-1]
+                    vendor, about, numLists, numReviews, avgRating,
+                    numProfiles, market_profiles[:-1]
                 ])
+                file.flush()
 
                 print(
-                    f"{index}: {vendor, numLists, numReviews, avgRating, numProfiles, market_profiles[:-1]}"
+                    f"{index}: {vendor, about, numLists, numReviews, avgRating, numProfiles, market_profiles[:-1]}"
                 )
             except NoSuchElementException:
                 continue
     except KeyboardInterrupt:
+        print("\n\nKeyboardInterrupt!!!!!!\n\n\n")
+        file.flush()
+        file.close()
+    finally:
         file.close()
 
 
