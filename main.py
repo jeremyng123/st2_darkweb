@@ -11,7 +11,7 @@ import os
 
 fieldnames = [
     "vendor", "about", "listings", "reviews", "ratings", "number of profiles",
-    "profiles (site: link)"
+    "profiles (site: link)", "items sold"
 ]
 
 
@@ -22,12 +22,13 @@ def searchWithKilo():
                      "kilo_scrape.csv"), "w")
     try:
         csv_file = csv.writer(file, delimiter=',')
+        csv_file.writerow(fieldnames)  # add headers
         for index, vendor in enumerate(vendors):
             try:
                 # get to main profile page
                 driver.get(KILOS_VENDOR.format(vendor))
                 about = driver.find_element_by_xpath(
-                    ".//textarea").get_attribute('value')
+                    ".//textarea").get_attribute('value').replace('\n', '\\n')
                 # print(f"\n\nabout:\n{about.get_attribute('value')}")
                 stats = driver.find_elements_by_class_name("stat")
                 numLists = stats[0].text
@@ -49,17 +50,34 @@ def searchWithKilo():
                             tds[0].
                             text] == "http://dead.site.dont.visit.onion/removed_for_user_safety":
                         links[tds[0].text] = tds[1].text
-
                 for site, link in links.items():
-                    market_profiles += f"{site}: {link}\n"
+                    market_profiles += f"{site}: {link}\\n"
+
+                # get to listing results
+                driver.get(KILOS_SEARCH_RESULT.format(vendor))
+                search_results = driver.find_elements_by_class_name(
+                    "searchResult")
+                items = set()
+                for search_result in search_results:
+                    seller = search_result.find_element_by_xpath(
+                        "./div/div[2]/p[1]/a").text
+                    if seller != vendor:
+                        continue
+                    item_name = search_result.find_element_by_xpath(
+                        "./div/div[2]/a/h4").text
+                    items.add(item_name)
+                itemnames = ""
+                for item in items:
+                    itemnames += item + "\\n"
+
                 csv_file.writerow([
                     vendor, about, numLists, numReviews, avgRating,
-                    numProfiles, market_profiles[:-1]
+                    numProfiles, market_profiles[:-2], itemnames[:-2]
                 ])
                 file.flush()
 
                 print(
-                    f"{index}: {vendor, about, numLists, numReviews, avgRating, numProfiles, market_profiles[:-1]}"
+                    f"{index}: {vendor, about, numLists, numReviews, avgRating, numProfiles, market_profiles[:-2], itemnames[:-2]}"
                 )
             except NoSuchElementException:
                 continue
