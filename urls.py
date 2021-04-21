@@ -4,5 +4,6 @@ KILOS = "http://dnmugu4755642434.onion"
 
 KILOS_VENDOR = KILOS + "/vendor/{}"
 KILOS_MARKET_PROFILE = KILOS + "/vendor/{}/redirect"
+KILOS_SEARCH_RESULT = KILOS + "/advanced_search?search={vendor}"
 
 WIKIURL = "http://wikitjerrta4qgz4.onion"
